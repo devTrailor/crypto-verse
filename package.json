@@ -9,6 +9,7 @@
     "axios": "^0.27.2",
     "chart.js": "^3.9.1",
     "html-react-parser": "^3.0.4",
+    "lodash": "^4.17.21",
     "millify": "^5.0.1",
     "moment": "^2.29.4",
     "node-sass": "^7.0.3",
