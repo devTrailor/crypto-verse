@@ -1,52 +1,65 @@
-import { Card, Col, Row } from 'antd'
-import millify from 'millify';
-import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+
+import React, { useState } from 'react';
+import { Select, Typography, Row, Col, Avatar, Card, Spin } from 'antd';
+import moment from 'moment';
+
 import { useGetCryptosQuery } from '../services/cryptoApi';
+import { useGetCryptoNewsQuery } from '../services/cryptoApiNews';
+
+const demoImage = 'https://www.bing.com/th?id=OVFT.mpzuVZnv8dwIMRfQGPbOPC&pid=News';
+
+const { Text, Title } = Typography;
+const { Option } = Select;
 
 const News = ({ simplified }) => {
-  const count = simplified ? 10 : 100;
+  const [loading, setLoading] = useState(false)
+  const [newsCategory, setNewsCategory] = useState('Cryptocurrency');
+  const { data } = useGetCryptosQuery(100);
+  const { data: cryptoNews } = useGetCryptoNewsQuery({ newsCategory, count: simplified ? 6 : 12 });
 
-  const { data: cryptoList, isFetching } = useGetCryptosQuery(count);
+  if (!cryptoNews?.value) return "Loading...."
 
-  if (isFetching) return "Loading....."
-
-  const [cryptos, setCryptos] = useState([])
-
-  const [searchItem, setSearchItem] = useState("")
-
-
-  useEffect(() => {
-    const filterData = cryptoList?.data?.coins.filter((coin) => coin.name.toLowerCase().includes(searchItem.toLowerCase()));
-    setCryptos(filterData)
-
-  }, [])
   return (
     <>
-      {!simplified && (
-        <div className="search-crypto">
-          <Input placeholder='Search Cryptocurrency....' onChange={(e) => setSearchItem(e.target.value)} />
-        </div>
-      )}
-      <Row gutter={[32, 32]} className="crypto-card-container">
-        {cryptos && cryptos.map((currency) => {
-          return (
-            <Col xs={24} sm={12} lg={6} key={currency.id} className='crypto-card' >
-              <Link to={`/crypto/${currency.id}`}>
-                <Card title={`${currency.rank}. ${currency.name}`}
-                  extra={<img className='crypto-image' src={currency.iconUrl} />}
-                  hoverable
-                >
-                  <p>Price: {millify(currency.price)}</p>
-                  <p>Market Cap:{millify(currency.marketCap)}</p>
-                  <p>Daily Change: {millify(currency.change)}%</p>
-
-                </Card>
-              </Link>
+      <Spin spinning={loading}>
+        <Row gutter={[24, 24]}>
+          {!simplified && (
+            <Col span={24}>
+              <Select
+                showSearch
+                className="select-news"
+                placeholder="Select a Crypto"
+                optionFilterProp="children"
+                onChange={(value) => setNewsCategory(value)}
+                filterOption={(input, option) => option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              >
+                <Option value="Cryptocurency">Cryptocurrency</Option>
+                {data?.data?.coins?.map((currency) => <Option key={currency.uuid} value={currency.name}>{currency.name}</Option>)}
+              </Select>
             </Col>
-          )
-        })}
-      </Row>
+          )}
+          {cryptoNews.value.map((news, i) => (
+            <Col xs={24} sm={12} lg={8} key={i}>
+              <Card hoverable className="news-card">
+                <a href={news.url} target="_blank" rel="noreferrer">
+                  <div className="news-image-container">
+                    <Title className="news-title" level={4}>{news.name}</Title>
+                    <img src={news?.image?.thumbnail?.contentUrl || demoImage} alt="" />
+                  </div>
+                  <p>{news.description.length > 100 ? `${news.description.substring(0, 100)}...` : news.description}</p>
+                  <div className="provider-container">
+                    <div>
+                      <Avatar src={news.provider[0]?.image?.thumbnail?.contentUrl || demoImage} alt="" />
+                      <Text className="provider-name">{news.provider[0]?.name}</Text>
+                    </div>
+                    <Text>{moment(news.datePublished).startOf('ss').fromNow()}</Text>
+                  </div>
+                </a>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </Spin>
     </>
   )
 }

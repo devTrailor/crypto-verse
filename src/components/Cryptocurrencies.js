@@ -10,18 +10,22 @@ const Cryptocurrencies = ({ simplified }) => {
   const { data: cryptoList, isFetching } = useGetCryptosQuery(count);
 
 
-  const [cryptos, setCryptos] = useState([])
+  const [cryptos, setCryptos] = useState()
   const [searchItem, setSearchItem] = useState("")
 
 
 
   useEffect(() => {
-    const filterData = cryptoList?.data?.coins.filter((coin) => coin.name.toLowerCase().includes(searchItem.toLowerCase()));
-    setCryptos(filterData)
+    setCryptos(cryptoList?.data?.coins);
+
+    const filteredData = cryptoList?.data?.coins.filter((item) => item.name.toLowerCase().includes(searchItem));
+
+    setCryptos(filteredData);
 
   }, [cryptoList, searchItem])
 
   if (isFetching) return "Loading.....";
+
 
   return (
     <>
@@ -32,9 +36,10 @@ const Cryptocurrencies = ({ simplified }) => {
       )}
       <Row gutter={[32, 32]} className="crypto-card-container">
         {cryptos && cryptos.map((currency, i) => {
+          console.log(currency)
           return (
-            <Col xs={24} sm={12} lg={6} key={i} className='crypto-card'>
-              <Link to={`/crypto/${currency.id}`}>
+            <Col xs={24} sm={12} lg={6} key={currency.uuid} className='crypto-card'>
+              <Link to={`/crypto/${currency.uuid}`}>
                 <Card title={`${currency.rank}. ${currency.name}`}
                   extra={<img className='crypto-image' src={currency.iconUrl} />}
                   hoverable
